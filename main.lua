@@ -1,36 +1,20 @@
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
 
---I based this script on ChatBot, but with the SimSimi api, therefore it has more accurate and fun answers XD
+_G.Owner = "Larry2kYT"
 
---Modify these parameters as you want--
+function getChat(message,plrname)
 
-local idioma = "en" --Here is the language you want SimSImi to respond to, es for "Español", en for "English"
-
-local chatfuel = "True" --If you want me to censor the swearing "True" or "False"
-
---From here down I don't recommend moving him if you don't know Lua
-
-local function mensajepro(mensaje, jugador) --In this function the magic happens
-    local texto = mensaje
-    local Responde = game:HttpGet("https://api.simsimi.net/v2/?text="..texto.."&lc="..idioma.."&cf="..chatfuel) --The SimSImi api is called
-    local datos = HttpService:JSONDecode(Responde)
-    
-   wait()
+   local Split = message:gsub(" ", "+") -- This takes spaces within the person's message and turns it into for ex: Hi+How+Are+You... to ensure that there are no errors and to also make the URL work
    
-   game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(jugador.." "..datos.success, "All") --A message is sent with the response of SimSImi
+   local Response = game:HttpGet("https://api.affiliateplus.xyz/api/chatbot?message=" .. Split .. "&botname=" .. plrname .. "&ownername=" .. _G.Owner .. "&user=1")
+   local Data = HttpService:JSONDecode(Response)
+   wait(1)
+   game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(Data.message, "All")
 end
 
-
-Players.PlayerChatted:Connect(function(type, plr, message) --When a player speaks
-    for _,plrs in pairs(game.Players:GetPlayers()) do
- 
- if (Players.LocalPlayer.Character.HumanoidRootPart.Position - plrs.Character.HumanoidRootPart.Position).magnitude <= 10 then --If the player is nearby, SimSimi will read their message.
-  if plr.Name == plrs.Name then
-      mensajepro(message, plr.Name) --The function is called
-  end
- end
- 
-end
+Players.PlayerChatted:Connect(function(type, plr, message)
+   if plr.Name ~= Players.LocalPlayer.Name then
+       getChat(message, plr.Name)
+   end
 end)

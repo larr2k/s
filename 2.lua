@@ -1,3 +1,5 @@
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))() 
+
 --//Toggle\\--
 getgenv().Toggle = false -- This toggles the esp, turning it to false will turn it off
 getgenv().TC = false -- This toggles team check, turning it on will turn on team check
@@ -9,23 +11,6 @@ local LP = P.LocalPlayer
 
 --//Debounce\\--
 local DB = false
-
---//Notification\\--
-game.StarterGui:SetCore("SendNotification", {
-	Title = "Notification",
-	Text = "This Script Was Made By Psygen" ,
-	Button1 = "Ok",
-	Button2 = "Shut Up",
-	Duration = math.huge
-})
-
-game.StarterGui:SetCore("SendNotification", {
-	Title = "Notification",
-	Text = "Please Subscribe To Psygen On Youtube" ,
-	Button1 = "Ok",
-	Button2 = "Shut Up",
-	Duration = math.huge
-})
 
 --//Loop\\--
 while task.wait() do
@@ -146,9 +131,6 @@ while task.wait() do
 	DB = false
 end
 
-
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))() 
-
 -- Create a window
 local Window = OrionLib:MakeWindow({
     Name = "Larry2k Hub",
@@ -156,9 +138,6 @@ local Window = OrionLib:MakeWindow({
     SaveConfig = false,
     ConfigFolder = "OrionTest"
 }) 
-
-local aimbot = loadstring(game:HttpGet("https://raw.githubusercontent.com/Exunys/Aimbot-V3/main/src/Aimbot.lua"))()
-Aimbot.Load()
 
 -- Create a tab for universal teleports
 local universal = Window:MakeTab({
@@ -222,8 +201,9 @@ local function updatePlayerDropdown()
 end
 
 -- Update dropdown initially
-updatePlayerDropdown()
-
+local playerList = getActivePlayerNames()()
+while wait(0.1) do
+  local playerList = getActivePlayerNames()
 -- Button to teleport to selected player
 teleportsSection:AddButton({
     Name = "Player TP",
@@ -242,17 +222,25 @@ teleportsSection:AddButton({
     end
 })
 
--- Initialize Orion library
-OrionLib:Init()
+local localplayeruniversal = universal:AddSection({
+    Name = "LocalPlayer"
+})
 
--- Function to update player list when players join or leave
-game.Players.PlayerAdded:Connect(function(player)
-    updatePlayerDropdown()
-end)
+toggleSection:AddToggle({
+    Name = "Esp",
+    Default = false,
+    Callback = function(value)
+        print("Toggle value:", value)
+        if value then
+            getgenv().Toggle = true
+            print("Esp enabled!")
+        else
+            getgenv().Toggle = false
+            print("Esp disabled!")
+        end
+    end
+})
 
-game.Players.PlayerRemoving:Connect(function(player)
-    updatePlayerDropdown()
-end)
 
 local robaconveniencestore = Window:MakeTab({
     Name = "Rob A Convenience Store",

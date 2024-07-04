@@ -1,5 +1,4 @@
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))() 
-getgenv().Toggle = false
 
 
 
@@ -180,7 +179,7 @@ teleports001:AddButton({
 
 
 --//Toggle\\--
-getgenv().Toggle = false -- This toggles the esp, turning it to false will turn it off
+-- There was a toggle here?
 getgenv().TC = false -- This toggles team check, turning it on will turn on team check
 local PlayerName = "Name" -- You can decide if you want the Player's name to be a display name which is "DisplayName", or username which is "Name"
 
@@ -190,23 +189,6 @@ local LP = P.LocalPlayer
 
 --//Debounce\\--
 local DB = false
-
---//Notification\\--
-game.StarterGui:SetCore("SendNotification", {
-	Title = "Notification",
-	Text = "This Script Was Made By Psygen" ,
-	Button1 = "Ok",
-	Button2 = "Shut Up",
-	Duration = math.huge
-})
-
-game.StarterGui:SetCore("SendNotification", {
-	Title = "Notification",
-	Text = "Please Subscribe To Psygen On Youtube" ,
-	Button1 = "Ok",
-	Button2 = "Shut Up",
-	Duration = math.huge
-})
 
 --//Loop\\--
 while task.wait() do

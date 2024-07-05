@@ -1,26 +1,28 @@
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/thanhdat4461/OrionMoblie/main/source')))() 
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
--- Create a window
-local Window = OrionLib:MakeWindow({
-    Name = "Larry2k Hub",
-    HidePremium = false,
-    SaveConfig = false,
-    ConfigFolder = "OrionTest"
+local Window = Fluent:CreateWindow({
+    Title = "Larry2k Hub",
+    SubTitle = "V0.4 Alpha",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 380),
+    Acrylic = true,
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.LeftControl
 })
 
--- Create a tab for universal teleports
-local universal = Window:MakeTab({
-    Name = "universal",
-    Icon = "rbxassetid://4483345998",  -- Adjust icon as needed
-    PremiumOnly = false
-})
+local Tabs = {
+    Universal = Window:AddTab({ Title = "Universal", Icon = "rbxassetid://4483345998" }),
+    RobAConvenienceStore = Window:AddTab({ Title = "Rob A Convenience Store", Icon = "rbxassetid://4483345998" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+}
 
--- Create a section for teleports
-local teleportsSection = universal:AddSection({
-    Name = "Teleports"
-})
+local Options = Fluent.Options
 
--- Function to get a list of active player names
+-- Universal Tab
+Tabs.Universal:AddParagraph({ Title = "Universal Features", Content = "Features in this tab are generally useful across different scenarios." })
+
 local function getActivePlayerNames()
     local activePlayerNames = {}
     for _, player in pairs(game.Players:GetPlayers()) do
@@ -29,52 +31,29 @@ local function getActivePlayerNames()
     return activePlayerNames
 end
 
--- Dropdown menu to select a player
-local playerDropdown = nil
 local selectedPlayer = nil
 
--- Function to update the selected player
-local function updateSelectedPlayer(playerName)
-    selectedPlayer = playerName
-    if playerName then
-        playerDropdown:SetValue(playerName)
+local playerDropdown = Tabs.Universal:AddDropdown("PlayerDropdown", {
+    Title = "Select Player",
+    Values = getActivePlayerNames(),
+    Default = nil,
+    Callback = function(value)
+        selectedPlayer = value
+        print("Selected Player:", selectedPlayer)
     end
-end
+})
 
--- Function to create or update the dropdown menu
 local function updatePlayerDropdown()
-    local playerList = getActivePlayerNames()
-
-    -- Create dropdown if it doesn't exist
-    if not playerDropdown then
-        playerDropdown = teleportsSection:AddDropdown({
-            Name = "Select Player",
-            Options = playerList,
-            Callback = function(selectedOption)
-                updateSelectedPlayer(selectedOption)
-            end
-        })
-    else
-        playerDropdown:UpdateOptions(playerList)
-    end
-
-    -- Update selected player if it's still in the list
-    if selectedPlayer and not table.find(playerList, selectedPlayer) then
-        selectedPlayer = nil
-    end
-
-    -- Update dropdown value to reflect selected player
-    if selectedPlayer then
-        playerDropdown:SetValue(selectedPlayer)
-    end
+    playerDropdown:SetValue(nil)
+    playerDropdown:UpdateValues(getActivePlayerNames())
 end
 
--- Update dropdown initially
-updatePlayerDropdown()
+game.Players.PlayerAdded:Connect(updatePlayerDropdown)
+game.Players.PlayerRemoving:Connect(updatePlayerDropdown)
 
--- Button to teleport to selected player
-teleportsSection:AddButton({
-    Name = "Player TP",
+Tabs.Universal:AddButton({
+    Title = "Player TP",
+    Description = "Teleport to the selected player",
     Callback = function()
         if selectedPlayer then
             local targetPlayer = game.Players:FindFirstChild(selectedPlayer)
@@ -90,70 +69,42 @@ teleportsSection:AddButton({
     end
 })
 
--- Function to update player list when players join or leave
-game.Players.PlayerAdded:Connect(function(player)
-    updatePlayerDropdown()
+local AimbotToggle = Tabs.Universal:AddToggle("AimbotEnabled", { Title = "Enable Aimbot", Default = false })
+AimbotToggle:OnChanged(function()
+    getgenv().AimbotEnabled = Options.AimbotEnabled.Value
 end)
 
-game.Players.PlayerRemoving:Connect(function(player)
-    updatePlayerDropdown()
+local TeamCheckToggle = Tabs.Universal:AddToggle("TeamCheck", { Title = "Aimbot Team Check", Default = false })
+TeamCheckToggle:OnChanged(function()
+    getgenv().TeamCheck = Options.TeamCheck.Value
 end)
 
-local localplayeruniversal = universal:AddSection({
-    Name = "Local Player"
-})
+local WallCheckToggle = Tabs.Universal:AddToggle("WallCheck", { Title = "Aimbot Wall Check", Default = true })
+WallCheckToggle:OnChanged(function()
+    getgenv().WallCheck = Options.WallCheck.Value
+end)
 
--- Add Toggle for Aimbot
-localplayeruniversal:AddToggle({
-    Name = "Enable Aimbot",
-    Default = false,
-    Callback = function(value)
-        getgenv().AimbotEnabled = value
-    end
-})
+getgenv().AimbotEnabled = Options.AimbotEnabled.Value
+getgenv().TeamCheck = Options.TeamCheck.Value
+getgenv().WallCheck = Options.WallCheck.Value
 
--- Add Toggle for Team Check
-localplayeruniversal:AddToggle({
-    Name = "Aimbot Team Check",
-    Default = false,
-    Callback = function(value)
-        getgenv().TeamCheck = value
-    end
-})
-
-localplayeruniversal:AddToggle({
-    Name = "Aimbot wall Check",
-    Default = true,
-    Callback = function(value)
-        getgenv().WallCheck = value
-    end
-})
-
---// Configuration \\--
-getgenv().AimbotEnabled = false  -- Toggle for the aimbot
-getgenv().TeamCheck = false  -- Toggle for team check
-getgenv().WallCheck = true  -- Toggle for wall check
-
---// Variables \\--
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Camera = game:GetService("Workspace").CurrentCamera
 
--- Function to check if a target is visible (no walls in the way)
 local function isVisible(targetPart)
     if getgenv().WallCheck then
         local origin = Camera.CFrame.Position
-        local direction = (targetPart.Position - origin).Unit * 300 -- Ray length of 300 studs
+        local direction = (targetPart.Position - origin).Unit * 300
 
         local ray = Ray.new(origin, direction)
         local part, position = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character}, false, true)
 
-        return part and part:IsDescendantOf(targetPart.Parent) -- Check if the ray hit the target
+        return part and part:IsDescendantOf(targetPart.Parent)
     end
     return true
 end
 
--- Function to get the nearest target player
 local function getNearestTarget()
     local nearestPlayer = nil
     local shortestDistance = math.huge
@@ -175,14 +126,12 @@ local function getNearestTarget()
     return nearestPlayer
 end
 
--- Function to aim at the target
 local function aimAt(target)
     if target and target.Character and target.Character:FindFirstChild("Head") then
         Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position)
     end
 end
 
--- Aimbot loop
 game:GetService("RunService").RenderStepped:Connect(function()
     if getgenv().AimbotEnabled then
         local target = getNearestTarget()
@@ -192,58 +141,66 @@ game:GetService("RunService").RenderStepped:Connect(function()
     end
 end)
 
-local robaconveniencestore = Window:MakeTab({
-    Name = "Rob A Convenience Store",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-}) 
+-- Rob A Convenience Store Tab
+Tabs.RobAConvenienceStore:AddParagraph({ Title = "Rob A Convenience Store Features", Content = "Features specific to robbing convenience stores." })
 
--- Create a section for teleports
-local teleports001 = robaconveniencestore:AddSection({
-    Name = "Teleports"
-}) 
-
--- Function to teleport
 local function teleportTo(location)
     local player = game.Players.LocalPlayer
-    local character = player.Character 
+    local character = player.Character
 
     if character and character:FindFirstChild("HumanoidRootPart") then
         local humanoidRootPart = character.HumanoidRootPart
-        local humanoid = character:FindFirstChildOfClass("Humanoid") 
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
 
         if humanoid then
             humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end 
+        end
 
         humanoidRootPart.CFrame = location
     else
         warn("Character or HumanoidRootPart not found")
     end
-end 
+end
 
--- Sell button
-teleports001:AddButton({
-    Name = "Sell",
+Tabs.RobAConvenienceStore:AddButton({
+    Title = "Sell",
+    Description = "Teleport to Sell location",
     Callback = function()
-        print("sell pressed")
-        -- Replace with your desired CFrame for "Sell"
-        local sellLocation = CFrame.new(76, 3, -22) -- Example coordinates
+        print("Sell pressed")
+        local sellLocation = CFrame.new(76, 3, -22)
         teleportTo(sellLocation)
     end
-}) 
+})
 
--- Steal button
-teleports001:AddButton({
-    Name = "Steal",
+Tabs.RobAConvenienceStore:AddButton({
+    Title = "Steal",
+    Description = "Teleport to Steal location",
     Callback = function()
-        print("steal pressed")
-        -- Replace with your desired CFrame for "Steal"
-        local stealLocation = CFrame.new(58, 3, 7) -- Example coordinates
+        print("Steal pressed")
+        local stealLocation = CFrame.new(58, 3, 7)
         teleportTo(stealLocation)
     end
-}) 
+})
 
+-- Fluent settings and addons integration
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
 
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({})
 
-OrionLib:Init()
+InterfaceManager:SetFolder("FluentScriptHub")
+SaveManager:SetFolder("FluentScriptHub/specific-game")
+
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+
+Window:SelectTab(1)
+
+Fluent:Notify({
+    Title = "Fluent",
+    Content = "The script has been loaded.",
+    Duration = 8
+})
+
+SaveManager:LoadAutoloadConfig()
